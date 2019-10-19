@@ -1,3 +1,4 @@
+const cTable = require('console.table');
 const inquirer = require('inquirer');
 const mysql = require('mysql');
 const connection = mysql.createConnection({
@@ -10,11 +11,7 @@ const connection = mysql.createConnection({
 connection.connect(err => (err) ? console.log('Error:',err) : console.log('Connected successfully'));
 
 connection.query('SELECT item_id, product_name, price FROM products', function (error, results){
-    results.forEach(product => console.log(
-        product.item_id, 
-        product.product_name,
-        product.price
-    ));
+    console.table(results);
 });
 
 connection.end();
