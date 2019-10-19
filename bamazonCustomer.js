@@ -31,34 +31,35 @@ connection.query('SELECT item_id, product_name, price FROM products', function (
                     const output = products.map((product) => `${product.item_id}) ${product.product_name}`);
                     return output;
                 },
-                filter: function(choice) {
-                    return parseInt(choice.charAt(0));
-                }
+                filter: choice => parseInt(choice.charAt(0)),
             },
             // Asks user for the quantity of product to be purchased
             {
                 type: 'number',
                 name: 'chooseQuantity',
                 message: 'How many do you want to buy?',
-                default: 1
+                default: 1,
+                validate: input => (!isNaN(input)) ? true : 'Please enter a valid number!'
             }
         ]).then(function(answers) {
-            // Selects stock for chosen product from SQL DB
-            connection.query('SELECT stock_quantity FROM products WHERE item_id = ?', [answers.chooseProduct], function (err, res){
+            // Selects stock and sales information for chosen product from SQL DB
+            connection.query('SELECT stock_quantity, product_sales FROM products WHERE item_id = ?', [answers.chooseProduct], function (err, res){
                 
                 if (err) throw err;
 
                 // Assigns returned product information into semantically relevant variables
                 const currentQuantity = res[0].stock_quantity;
+                const currentSales = res[0].product_sales;
                 const purchaseQuantity = answers.chooseQuantity;
                 const productID = answers.chooseProduct - 1;
-                const productPrice = products[productID].price
-                const totalPrice = purchaseQuantity * productPrice
+                const productPrice = products[productID].price;
+                const totalPrice = purchaseQuantity * productPrice;
 
                 // Checks if there is enough stock_quantity to fulfill the user's purchase
                 if (currentQuantity >= purchaseQuantity) {
-                    // Updates the product entry in DB with the post-purchase quantity
-                    connection.query('UPDATE products SET stock_quantity = ? WHERE item_id = ?', [currentQuantity - purchaseQuantity, productID + 1],
+                    // Updates the product entry in DB with the post-purchase quantity and new total sales
+                    connection.query('UPDATE products SET stock_quantity = ?, product_sales = ? WHERE item_id = ?',
+                        [currentQuantity - purchaseQuantity, currentSales + totalPrice, productID + 1],
                         function(err) {
                             if (err) throw err;
                             // Outputs summmary of user order to console
@@ -91,5 +92,7 @@ connection.query('SELECT item_id, product_name, price FROM products', function (
             });
         });
     };
+
+    // Call main input loop
     buyProduct();
 });
