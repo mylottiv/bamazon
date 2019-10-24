@@ -7,7 +7,7 @@ CREATE TABLE products (
     department_name VARCHAR(255) NOT NULL,
     price FLOAT NOT NULL,
     stock_quantity INT NOT NULL,
-    product_sales FLOAT
+    product_sales FLOAT NOT NULL DEFAULT 0
 );
 CREATE TABLE departments (
 	department_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
