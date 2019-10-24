@@ -19,7 +19,9 @@
   "homepage": "https://github.com/mylottiv/bamazon#readme",
   "dependencies": {
     "console.table": "^0.10.0",
+    "g": "^2.0.1",
     "inquirer": "^7.0.0",
-    "mysql": "^2.17.1"
+    "mysql": "^2.17.1",
+    "mysql-promise": "^5.0.0"
   }
 }
