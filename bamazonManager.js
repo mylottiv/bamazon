@@ -31,7 +31,7 @@ function managerInput(){
             when: function(answers) {
                 return answers.chooseAction === 'Add to inventory'
             },
-            choices: () => populateInventory('Add to Inventory'),
+            choices: () => populateInventory('Add to inventory'),
             filter: choice => parseInt(choice.charAt(0))
         },
         // If adding to inventory after inputting product prompt for quantity
@@ -92,16 +92,15 @@ function managerInput(){
             }
         }
     ]).then(function(answers){
-        console.log(answers);
 
         // If adding new product
         if (answers.chooseAction === 'Add new product') {
             const queryURL = `INSERT INTO products (product_name, department_name, price, stock_quantity) VALUES (?, ?, ?, ?)`
             mysqlDB.query(queryURL, [answers.newProductName, answers.newProductDepartment, answers.newProductPrice, answers.newProductStock])
             .then(function(res){
-                console.log(`Added ${answers.newProductName} to product database`);
-                populateInventory(answers.chooseAction).then(res => console.table(res));
-            })
+                console.log(`Added ${answers.newProductName} to product database \n`);
+                startOver();
+            }).catch((err) => console.log(err));
         }
 
         // If updating inventory of existing product
@@ -109,22 +108,39 @@ function managerInput(){
             const queryURL = `UPDATE products SET stock_quantity = stock_quantity + ? WHERE item_id = ?`
             mysqlDB.query(queryURL, [answers.addStock, answers.chooseProduct])
             .then(function(res){
-                console.log(`Updated ${answers.chooseProduct} stock`);
-                populateInventory('View all Products').then(res => console.table(res));
+                console.log(`Added ${answers.addStock} to stock of product with ID:${answers.chooseProduct} \n`);
+                startOver();
             }).catch((err) => console.log(err));
         }
         
         // If viewing all products or just low stock products
         else {
-            populateInventory(answers.chooseAction).then(res => console.table(res));
-        ;}
-        // connection.end();
+            populateInventory(answers.chooseAction).then((res) => {console.table(res); startOver()});
+        };
+        // console.log('blocking test');
+        function startOver(){
+            inquirer.prompt([
+                // Prompt user to restart interface
+                {
+                    type: 'confirm',
+                    name: 'startOver',
+                    message: 'Take another action?',
+                }
+            ]).then(function(answer){
+                if (answer.startOver === true) {
+                    managerInput();
+                }
+                else {
+                    mysqlDB.end();
+                }; 
+            });
+        };
     });
 };
 async function populateInventory(action) {
     const queryURL = `SELECT item_id, product_name, price, stock_quantity FROM products ${(action === 'View low inventory') ? 'WHERE stock_quantity <= 5' : ''}`
     const output = await mysqlDB.query(queryURL).catch(err => console.log('error: ', err));
-    if (action === 'Add to Inventory') {
+    if (action === 'Add to inventory') {
         return output[0].map(product => `${product.item_id}) ${product.product_name} Stock: ${product.stock_quantity}`);
     }
     else {
