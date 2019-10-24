@@ -31,7 +31,7 @@ function managerInput(){
             when: function(answers) {
                 return answers.chooseAction === 'Add to inventory'
             },
-            choices: () => populateInventory('addStock'),
+            choices: () => populateInventory('Add to Inventory'),
             filter: choice => parseInt(choice.charAt(0))
         },
         // If adding to inventory after inputting product prompt for quantity
@@ -93,17 +93,41 @@ function managerInput(){
         }
     ]).then(function(answers){
         console.log(answers);
-        connection.end();
+
+        // If adding new product
+        if (answers.chooseAction === 'Add new product') {
+            const queryURL = `INSERT INTO products (product_name, department_name, price, stock_quantity) VALUES (?, ?, ?, ?)`
+            mysqlDB.query(queryURL, [answers.newProductName, answers.newProductDepartment, answers.newProductPrice, answers.newProductStock])
+            .then(function(res){
+                console.log(`Added ${answers.newProductName} to product database`);
+                populateInventory(answers.chooseAction).then(res => console.table(res));
+            })
+        }
+
+        // If updating inventory of existing product
+        else if (answers.chooseAction === 'Add to inventory') {
+            const queryURL = `UPDATE products SET stock_quantity = stock_quantity + ? WHERE item_id = ?`
+            mysqlDB.query(queryURL, [answers.addStock, answers.chooseProduct])
+            .then(function(res){
+                console.log(`Updated ${answers.chooseProduct} stock`);
+                populateInventory('View all Products').then(res => console.table(res));
+            }).catch((err) => console.log(err));
+        }
+        
+        // If viewing all products or just low stock products
+        else {
+            populateInventory(answers.chooseAction).then(res => console.table(res));
+        ;}
+        // connection.end();
     });
 };
-async function populateInventory(flag) {
-    const queryURL = `SELECT item_id, product_name, price, stock_quantity FROM products ${(flag === 'lowStock') ? 'WHERE stock_quantity <= 5' : ''}`
-    const output = (await mysqlDB.query(queryURL))[0];
-    console.log(output);
-    if (flag === 'addStock') {
-        return output.map(product => `${product.item_id}) ${product.product_name} Stock: ${product.stock_quantity}`);
+async function populateInventory(action) {
+    const queryURL = `SELECT item_id, product_name, price, stock_quantity FROM products ${(action === 'View low inventory') ? 'WHERE stock_quantity <= 5' : ''}`
+    const output = await mysqlDB.query(queryURL).catch(err => console.log('error: ', err));
+    if (action === 'Add to Inventory') {
+        return output[0].map(product => `${product.item_id}) ${product.product_name} Stock: ${product.stock_quantity}`);
     }
     else {
-        return output;
+        return output[0];
     };
 };
