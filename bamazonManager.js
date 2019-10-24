@@ -1,7 +1,6 @@
 // Initialize Modules
 const cTable = require('console.table');
 const inquirer = require('inquirer');
-// const mysql = require('mysql');
 const mysqlDB = require('mysql-promise')();
 
 // Initialize MySQL DB connection
@@ -12,7 +11,6 @@ mysqlDB.configure({
     database: 'bamazon_db'
 });
 
-// connection.connect(err => (err) ? console.log('Error:',err) : console.log('\nConnected successfully'));
 managerInput();
 function managerInput(){
     inquirer.prompt([
@@ -117,7 +115,7 @@ function managerInput(){
         else {
             populateInventory(answers.chooseAction).then((res) => {console.table(res); startOver()});
         };
-        // console.log('blocking test');
+
         function startOver(){
             inquirer.prompt([
                 // Prompt user to restart interface
